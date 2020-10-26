@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+
+CONFIG_FILE = File.join(__dir__, '..', 'config', 'kafo.yaml')
+
+require 'kafo'
+
+Kafo::KafoConfigure.hooking.register_boot(:add_pry_option) do
+  app_option '--pry', 'HOOK', "Start a pry session as part of a hook. Doesn't work on boot. Pass true for all"
+end
+
+Kafo::Hooking::TYPES.each do |level|
+  Kafo::KafoConfigure.hooking.send(:register, level, 'call_pry') do
+    if [level.to_s, 'true'].include?(app_value(:pry))
+      say "Starting pry session as a #{level} hook"
+      require 'pry'
+      binding.pry
+    end
+  end
+end
+
+result = Kafo::KafoConfigure.run
+exit result.nil? ? 0 : result.exit_code
